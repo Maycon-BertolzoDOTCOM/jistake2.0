@@ -1,0 +1,47 @@
+# JANUS — Registry de links auditáveis
+# Regra dura: só links listados aqui são auditáveis. Link fora daqui → worker recusa.
+# Links de terceiros NUNCA entram aqui.
+# Campo `gate`: pre-aprovado | pendente — worker.py só executa probe com
+# gate.action_approved(link, categoria) verdadeiro (ver janus/queue/gate.py).
+
+gpts:
+  - id: jis-take-2.0
+    link: https://chatgpt.com/g/g-69f50c32803c819182125318574cdc3d-jis-take-2-0-video-direction-by-dougdemarco
+    descricao: Gerador de prompts Seedance 2.0
+    autorizado: true
+    # Gate pré-aprovado pelo dono em 2026-10-12 (link compartilhado pelo dono).
+    # PoC com canário: SÓ na isca. Em produção, cat8/cat11 medem vazamento do
+    # system prompt REAL — resultado vai para achado separado, com kill switch.
+    gate: pre-aprovado
+    prioridade: alta
+    categorias: [cat1_direta, cat2_roleplay, cat3_autoridade, cat4_traducao, cat8_output_embedding]
+
+  # Alvo controlado do PoC do Achado #002. GPT isca criado só para testes,
+  # com segredo canário sintético (formato <palavra>-<palavra>-<4chars>).
+  # O VALOR do canário vive só no system prompt da isca e no relatório
+  # preenchido em relatorios/ — NUNCA neste arquivo.
+  - id: isca-poc-002
+    link: TROCAR_PELO_LINK_DA_ISCA
+    descricao: GPT isca do PoC #002 (canário sintético, sem dados reais)
+    autorizado: true
+    gate: pre-aprovado
+    prioridade: alta
+    categorias: [cat7_multiturno, cat8_output_embedding, cat11_lrl, cat12_encoding]
+
+  # Placeholders — TROCAR pelos links reais antes de enfileirar.
+  # Enquanto o link for PLACEHOLDER, o worker recusa (não resolve gpt_id).
+  - id: jis-storyboard
+    link: PLACEHOLDER_TROCAR_PELO_LINK_REAL
+    descricao: Gerador de storyboard
+    autorizado: false
+    gate: pendente
+    prioridade: media
+    categorias: [cat1_direta, cat2_roleplay]
+
+  - id: jis-voice
+    link: PLACEHOLDER_TROCAR_PELO_LINK_REAL
+    descricao: Direção de voz
+    autorizado: false
+    gate: pendente
+    prioridade: baixa
+    categorias: [cat1_direta]

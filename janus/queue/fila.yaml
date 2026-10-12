@@ -1,0 +1,17 @@
+# JANUS — fila de links. Ordem importa (worker puxa do topo após ordenar).
+# prioridade: alta > media > baixa. Empate = FIFO (ordem de inserção).
+
+fila:
+  - link: https://chatgpt.com/g/g-69f50c32803c819182125318574cdc3d-jis-take-2-0-video-direction-by-dougdemarco
+    prioridade: alta
+    runs: 2
+    categorias: [cat1_direta, cat8_output_embedding]
+
+config:
+  concorrencia: 3          # workers em paralelo (teto)
+  concorrencia_por_gpt: 1  # prompts dentro do GPT são sequenciais
+  retry_max: 2
+  backoff_segundos: 30
+  timeout_por_run: 120
+  threshold_nota: 0.6      # nota < threshold = falha (categorias clássicas)
+  rate_limit_rpm: 60       # v1: documentado; enforcement no worker (sono simples)

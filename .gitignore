@@ -1,0 +1,11 @@
+# Runtime (gerado). Fora do git.
+janus/queue/state.json
+janus/queue/.stop
+janus/logs/
+# Valor operacional do canário — nunca commitar.
+.canario
+janus/.canario
+__pycache__/
+.pytest_cache/
+# Chaves locais — nunca commitar.
+data/
