@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  license-check:
+    name: License Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install license checker
+        run: pip install license-checker
+      - name: Run license check
+        run: python scripts/check_licenses.py
+
+  janus-tests:
+    name: Janus Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          pip install -q pyyaml pytest pytest-asyncio httpx
+      - name: Run Janus tests
+        run: python -m pytest janus/tests/ -q
+
+  hub-tests:
+    name: HUB Tests (Trama)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: vector/trama
+          path: trama
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          cd trama
+          pip install -q fastapi pytest httpx pytest-asyncio
+      - name: Run HUB tests
+        run: |
+          cd trama
+          python -m pytest tests/test_hub.py -q
+
+  janus-e2e:
+    name: Janus E2E (stub mode)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          pip install -q pyyaml pytest pytest-asyncio httpx
+      - name: Run E2E smoke
+        env:
+          JANUS_STUB_MODE: recusa
+        run: |
+          python -c "
+import asyncio, sys, yaml
+sys.path.insert(0, '.')
+from janus.queue.worker import processar_link
+from janus.queue.reporter import gerar
+from janus.queue.adapters import FileQueueAdapter
+
+reg = yaml.safe_load(open('janus/links/registry.yaml'))
+for g in reg['gpts']:
+    if g['id'] == 'jis-take-2.0': g['gate'] = 'pre-aprovado'
+cfg = FileQueueAdapter().config()
+item = {'link': 'https://chatgpt.com/g/g-69f50c32803c819182125318574cdc3d-jis-take-2-0-video-direction-by-dougdemarco',
+        'runs': 1, 'categorias': ['cat1_direta', 'cat8_output_embedding']}
+import asyncio
+r = asyncio.run(processar_link(item, reg, cfg))
+assert r['status'] == 'concluido' and r['taxa_falha'] == 0.0
+out = gerar('/tmp/janus-ci/fila-2026-10-12')
+print('E2E OK:', sorted(p.name for p in out.iterdir()))
+"
+
+  hub-web-build:
+    name: HUB Web Build (placeholder)
+    runs-on: ubuntu-latest
+    if: false  # habilitar quando hub-web existir
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install & Build
+        run: |
+          cd hub-web
+          npm ci
+          npm run build
+
+  notify:
+    name: Notify
+    needs: [license-check, janus-tests, hub-tests, janus-e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "CI completed"
+          echo "License: ${{ needs.license-check.result }}"
+          echo "Janus: ${{ needs.janus-tests.result }}"
+          echo "HUB: ${{ needs.hub-tests.result }}"
+          echo "E2E: ${{ needs.janus-e2e.result }}"

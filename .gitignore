@@ -5,7 +5,26 @@ janus/logs/
 # Valor operacional do canário — nunca commitar.
 .canario
 janus/.canario
+# Python
 __pycache__/
+*.pyc
 .pytest_cache/
+# Node
+hub-web/node_modules/
+hub-web/.next/
+hub-web/.env
+# Python venv
+.venv/
+venv/
+# IDE
+.vscode/
+.idea/
+*.swp
+# OS
+.DS_Store
+Thumbs.db
+# EscapeKit
+escapekit-mcp/.env
+escapekit-mcp/__pycache__/
 # Chaves locais — nunca commitar.
 data/

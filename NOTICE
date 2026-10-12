@@ -1,0 +1,20 @@
+Janus Auditor + HUB — Maycon Bertolzo
+
+This product includes software developed by:
+- Maycon Bertolzo (https://github.com/Maycon-BertolzoDOTCOM)
+- Contributors to the Janus project
+
+Third-party software included:
+- FastAPI (MIT License) — Sebastián Ramírez
+- Pydantic (MIT License) — Samuel Colvin
+- PyYAML (MIT License) — Kirill Simonov
+- PyTest (MIT License) — Holger Krekel et al.
+- httpx (MIT License) — Tom Christie
+- PyYAML (MIT License) — Kirill Simonov
+- httpx (MIT License) — Tom Christie
+- Python stdlib (PSF License)
+
+For full third-party license details, see THIRD-PARTY-LICENSES.md
+
+The escapekit-mcp component is licensed separately under Apache-2.0.
+See escapekit-mcp/LICENSE for details.
