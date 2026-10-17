@@ -1,0 +1,9 @@
+# HUB — artefatos de build e dependencias
+# Sem barra inicial: casa em qualquer profundidade abaixo de hub/.
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Nao ignorar *.d.ts: plugins/cinema/src/xmldom.d.ts e fonte real
+# (shim de modulo ambient) e precisa ser versionado.

@@ -1,0 +1,24 @@
+{
+  "id": "hub-cinema",
+  "name": "CinemaOps",
+  "version": "1.0.0",
+  "coreVersion": "^1.0.0",
+  "entityName": "Filme",
+  "timelineName": "Sessão",
+  "certificateName": "KDM",
+  "description": "Operação de projeção digital DCI — parse CPL/PKL, timeline de reels, validação KDM",
+  "author": "dougdemarco",
+  "license": "Apache-2.0",
+  "keywords": ["cinema", "dci", "cpl", "pkl", "kdm", "media-block"],
+  "engines": {
+    "node": ">=20.0.0",
+    "python": ">=3.11"
+  },
+  "contributions": {
+    "hub.parser": "./parser",
+    "hub.timeline": "./timeline",
+    "hub.status": "./status",
+    "hub.actions": "./actions",
+    "hub.glossary": "./glossary"
+  }
+}

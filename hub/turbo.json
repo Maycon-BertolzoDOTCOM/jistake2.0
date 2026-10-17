@@ -1,0 +1,25 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test": {
+      "outputs": ["coverage/**"],
+      "dependsOn": ["build"]
+    }
+  },
+  "globalEnv": ["NODE_ENV", "JANUS_REGISTRY_PATH", "JANUS_CATEGORIES_PATH", "JANUS_CLI_PATH", "ESCAPEKIT_PATH"]
+}

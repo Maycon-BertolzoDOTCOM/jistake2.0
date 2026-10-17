@@ -1,0 +1,26 @@
+{
+  "console": [
+    "memory",
+    "hub-ai-memory"
+  ],
+  "memory.provider": "memory_provider",
+  "okf": {
+    "path": "/opt/hub/ai-memory/wiki",
+    "format": "OKF-0.2",
+    "autoEmbeddings": true,
+    "embeddingProvider": "local"
+  },
+  "inbox": {
+    "maxMessages": 10000,
+    "retentionDays": 180
+  },
+  "handoff": {
+    "allowExternalOwners": true,
+    "maxSizeKb": 1024
+  },
+  "orm": {
+    "dbPath": "/opt/hub/ai-memory/memory.sqlite",
+    "autoMigrate": true,
+    "backupCompression": true
+  }
+}

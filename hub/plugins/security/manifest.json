@@ -1,0 +1,25 @@
+{
+  "id": "hub-security",
+  "name": "SecurityOps",
+  "version": "1.0.0",
+  "coreVersion": "^1.0.0",
+  "entityName": "GPT Alvo",
+  "timelineName": "Pipeline de Auditoria",
+  "certificateName": "Autorização de Gate",
+  "description": "Plugin para auditoria de GPTs customizados (Janus) + libertação de sandboxes (EscapeKit) + engenharia reversa (REA) + pipeline de vendas",
+  "author": "dougdemarco",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/maycon-bertolzo/JISTake2.0",
+  "keywords": ["security", "audit", "gpt", "janus", "escapekit", "rea", "red-team"],
+  "engines": {
+    "node": ">=20.0.0",
+    "python": ">=3.11"
+  },
+  "contributions": {
+    "hub.parser": "./parser",
+    "hub.timeline": "./timeline",
+    "hub.status": "./status",
+    "hub.actions": "./actions",
+    "hub.glossary": "./glossary"
+  }
+}

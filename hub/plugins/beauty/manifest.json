@@ -1,0 +1,23 @@
+{
+  "id": "hub-beauty",
+  "name": "BeautyOps",
+  "version": "1.0.0",
+  "coreVersion": "^1.0.0",
+  "entityName": "Cliente",
+  "timelineName": "Agendamento",
+  "certificateName": "Licença/Disponibilidade",
+  "description": "Operação de salão/unhas/nail — agenda, overflow de bairro, parceiros, no-show e receita recuperada",
+  "author": "dougdemarco",
+  "license": "Apache-2.0",
+  "keywords": ["beauty", "salon", "nail", "booking", "overflow", "network"],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "contributions": {
+    "hub.parser": "./parser",
+    "hub.timeline": "./timeline",
+    "hub.status": "./status",
+    "hub.actions": "./actions",
+    "hub.glossary": "./glossary"
+  }
+}

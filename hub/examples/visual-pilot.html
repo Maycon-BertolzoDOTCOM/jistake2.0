@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Visual Pilot</title>
+  
+  <style>
+:root {
+  --color-primary: #0f172a;
+  --color-accent: #22c55e;
+  --font-family: system-ui, sans-serif;
+  --radius: 1rem;
+  --spacing: 1rem;
+}
+body { font-family: var(--font-family); margin: 0; }
+.hero { padding: 4rem 2rem; text-align: center; }
+.cta a, .booking-cta a { display: inline-block; padding: 0.75rem 1.25rem; border-radius: var(--radius); background: var(--color-accent); color: #fff; text-decoration: none; }
+.skip-link { position: absolute; left: -9999px; top: 0; }
+.skip-link:focus { left: 1rem; top: 1rem; z-index: 100; background: #000; color: #fff; padding: 0.5rem 1rem; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Pular para conteúdo principal</a>
+  <main id="main-content" role="main">
+    <section id="hero">
+<section class="hero">
+  <h1>Visual Pilot</h1>
+  <p>Adapters lazy com fallback</p>
+  <a class="cta" href="#demo">Ver demo</a>
+</section>
+<div class="visual-adapter visual-gsap" data-visual-adapter="gsap" data-visual-props="{&quot;label&quot;:&quot;Hero motion&quot;}">Hero motion</div></section>
+<section id="three">
+<section class="features">
+  <ul><li><strong>3D</strong><span>Three.js adapter</span></li></ul>
+</section>
+<div class="visual-adapter visual-three" data-visual-adapter="three" data-visual-props="{&quot;label&quot;:&quot;3D scene&quot;}">3D scene</div></section>
+<section id="rive">
+<section class="testimonials">
+  <blockquote><p>Micro-interação</p><cite>Rive</cite></blockquote>
+</section>
+<div class="visual-adapter visual-rive" data-visual-adapter="rive" data-visual-props="{&quot;label&quot;:&quot;Rive badge&quot;}">Rive badge</div></section>
+<section id="splat">
+<section class="gallery">
+  <figure><img src="/assets/nail.jpg" alt="Nail splat" /><figcaption>SuperSplat</figcaption></figure>
+</section>
+<div class="visual-adapter visual-splat" data-visual-adapter="splat" data-visual-props="{&quot;label&quot;:&quot;Splat viewer&quot;}">Splat viewer</div></section>
+<section id="motion">
+<section class="tabs" data-construct="tabs">
+  <div role="tabpanel" id="panel-0" hidden="false">A</div><div role="tabpanel" id="panel-1" hidden="true">B</div>
+  <div role="tablist" aria-label="Tabs">
+    <button type="button" role="tab" id="tab-0" aria-selected="true" data-tab="0">A</button><button type="button" role="tab" id="tab-1" aria-selected="false" data-tab="1">B</button>
+  </div>
+</section>
+<div class="visual-adapter visual-motion" data-visual-adapter="motion" data-visual-props="{&quot;label&quot;:&quot;Motion&quot;}">Motion</div></section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://unpkg.com/@rive-app/canvas@2.10.3/rive.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.min.js"></script>
+
+  <script>(() => {
+  const q = (root, sel) => Array.from(root.querySelectorAll(sel));
+  const tabs = q(document, "[data-construct='tabs']");
+  tabs.forEach((section) => {
+    const buttons = q(section, "[data-tab]");
+    const panels = q(section, "[data-panel]");
+    buttons.forEach((button, index) => {
+      button.addEventListener("click", () => {
+        buttons.forEach((item, i) => item.setAttribute("aria-selected", String(i === index)));
+        panels.forEach((panel, i) => { panel.hidden = i !== index; });
+      });
+    });
+  });
+  const modals = q(document, "[data-construct='modal']");
+  modals.forEach((modal) => {
+    const trigger = modal.querySelector("[data-modal-trigger]");
+    const content = modal.querySelector("[data-modal-content]");
+    if (!trigger || !content) return;
+    trigger.addEventListener("click", () => { content.hidden = false; });
+    content.addEventListener("click", (event) => { if (event.target === content) content.hidden = true; });
+  });
+  const drawers = q(document, "[data-construct='drawer']");
+  drawers.forEach((drawer) => {
+    const trigger = drawer.querySelector("[data-drawer-trigger]");
+    const content = drawer.querySelector("[data-drawer-content]");
+    if (!trigger || !content) return;
+    trigger.addEventListener("click", () => { content.hidden = !content.hidden; });
+  });
+  const tooltips = q(document, "[data-construct='tooltip']");
+  tooltips.forEach((tooltip) => {
+    const bubble = tooltip.querySelector("[role='tooltip']");
+    if (!bubble) return;
+    const show = () => { bubble.hidden = false; };
+    const hide = () => { bubble.hidden = true; };
+    tooltip.addEventListener("mouseenter", show);
+    tooltip.addEventListener("mouseleave", hide);
+    tooltip.addEventListener("focusin", show);
+    tooltip.addEventListener("focusout", hide);
+  });
+  const counters = q(document, "[data-construct='animated-counter']");
+  counters.forEach((counter) => {
+    const target = Number(counter.getAttribute("data-value") || "0");
+    const start = performance.now();
+    const duration = 900;
+    const tick = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      counter.textContent = String(Math.round(target * progress));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  const reveals = q(document, "[data-construct='scroll-reveal']");
+  reveals.forEach((reveal) => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          reveal.classList.add("is-visible");
+          observer.unobserve(reveal);
+        }
+      });
+    });
+    observer.observe(reveal);
+  });
+  const parallaxes = q(document, "[data-construct='parallax']");
+  parallaxes.forEach((parallax) => {
+    const speed = Number(parallax.getAttribute("data-speed") || "0.5");
+    const onScroll = () => {
+      parallax.style.transform = "translateY(" + (window.scrollY * speed) + "px)";
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  });
+})();</script>
+  <script>if (window.gsap) { document.querySelectorAll("[data-visual-adapter='gsap']").forEach((node) => { window.gsap.from(node, { opacity: 0, y: 24, duration: 0.9, ease: "power2.out" }); }); }
+if (window.THREE) { document.querySelectorAll("[data-visual-adapter='three']").forEach((node) => { node.setAttribute("data-three-ready", "true"); }); }
+if (window.rive) { document.querySelectorAll("[data-visual-adapter='rive']").forEach((node) => { node.setAttribute("data-rive-ready", "true"); }); }
+if (window.GaussianSplats3D) { document.querySelectorAll("[data-visual-adapter='splat']").forEach((node) => { node.setAttribute("data-splat-ready", "true"); }); }
+document.querySelectorAll("[data-visual-adapter='motion']").forEach((node) => { node.classList.add("motion-ready"); });</script>
+  <script>
+    if (window.gsap) {
+      document.querySelectorAll("[data-visual-adapter='gsap']").forEach((node) => {
+        window.gsap.from(node, { opacity: 0, y: 24, duration: 0.9, ease: "power2.out" });
+      });
+    }
+  </script>
+</body>
+</html>

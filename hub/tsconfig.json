@@ -1,0 +1,58 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "incremental": true,
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./core/timeline-engine"
+    },
+    {
+      "path": "./core/status-engine"
+    },
+    {
+      "path": "./core/command-palette"
+    },
+    {
+      "path": "./core/deception"
+    },
+    {
+      "path": "./core/reactor-config"
+    },
+    {
+      "path": "./core/ai-memory"
+    },
+    {
+      "path": "./plugins/security"
+    },
+    {
+      "path": "./plugins/cinema"
+    },
+    {
+      "path": "./plugins/saude"
+    },
+    {
+      "path": "./plugins/beauty"
+    },
+    {
+      "path": "./core/pageforge"
+    },
+    {
+      "path": "./core/visualforge"
+    },
+    {
+      "path": "./core/contentforge"
+    },
+    {
+      "path": "./core/agent-pipeline"
+    },
+    {
+      "path": "./core/buildforge"
+    },
+    {
+      "path": "./core/giants"
+    }
+  ]
+}

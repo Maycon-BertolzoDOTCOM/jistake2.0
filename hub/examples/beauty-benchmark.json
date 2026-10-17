@@ -1,0 +1,22 @@
+{
+  "file": "./examples/beauty-landing.html",
+  "passed": true,
+  "budgetKb": 100,
+  "checks": {
+    "sizeKb": 9.39,
+    "skipLink": true,
+    "mainLandmark": true,
+    "visualAdapters": [
+      "gsap",
+      "rive",
+      "motion",
+      "three",
+      "splat"
+    ],
+    "dataConstructs": 9,
+    "cdnScripts": 3
+  },
+  "recommendations": [
+    "OK: página dentro do budget e com acessibilidade básica."
+  ]
+}
