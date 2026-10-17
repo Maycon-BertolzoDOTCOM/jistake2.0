@@ -43,16 +43,6 @@ export const beautyLandingSchema: PageSchema = {
       ],
     },
     {
-      id: "proof",
-      constructs: [
-        {
-          id: "proof-1",
-          type: "proof",
-          props: { items: ["90–120 chamadas no Instagram", "20–50 atendimentos por semana", "5 km de contingência"] },
-        },
-      ],
-    },
-    {
       id: "features",
       constructs: [
         {

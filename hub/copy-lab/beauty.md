@@ -29,7 +29,7 @@
 **CTA:** Quero minha bios
 
 ## Copy — Problema
-Seu salão recebe 90–120 chamadas, mas atende 20–50 clientes por semana.  
+**Hipótese (sem fonte — a medir no piloto):** profissional típica recusa um volume relevante de solicitações por semana por falta de capacidade.  
 Cliente quer rapidez. Você perde receita por falta de encaixe.
 
 ## Copy — Solução
@@ -73,10 +73,10 @@ Apenas com consentimento explícito (LGPD).
 - **Para parceiro:** “Quero ser parceiro”
 - **Para cliente:** “Ver parceiros perto”
 
-## Social proof (placeholders)
-- “Meu salão cheio virou receita para parceiros próximos.”
-- “Consegui encaixar 5 clientes em 1 semana.”
-- “O quiz de capacidade evitou overbooking.”
+## Social proof
+**Pendente por decisão editorial.** Nenhum depoimento entra na landing antes de existir prova real: nome da profissional, empresa, autorização de uso, data e origem do dado.
+
+Regra: alegação comercial sem fonte verificável é removida, não atenuada com "aprox." ou "em média".
 
 ## Constructs da landing (passo a passo)
 1. Hero
@@ -112,5 +112,4 @@ Apenas com consentimento explícito (LGPD).
 - Piloto começa onde houver maior entropia de movimento.
 - Comunidade via Instagram no MVP.
 - Consentimento explícito antes de compartilhar lead.
-EOF
-echo "copy lab created"
+- Toda métrica adicionada a este arquivo precisa de fonte registrada (URL, data de acesso, contexto). Sem isso, vira hipótese e não pode virar copy.

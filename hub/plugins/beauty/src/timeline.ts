@@ -6,7 +6,7 @@ import {
   ValidationError,
 } from "@hub/reactor-config";
 
-const FLOW_ORDER = ["agendamento", "confirmacao", "atendimento", "pagamento", "followup", "overflow"];
+export const FLOW_ORDER = ["agendamento", "confirmacao", "atendimento", "pagamento", "followup", "overflow"];
 
 export class BeautyTimeline implements TimelineProviderContribution {
   async getBlocks(entities: Entity[]): Promise<TimelineBlock[]> {

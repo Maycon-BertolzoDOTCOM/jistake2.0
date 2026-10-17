@@ -3,7 +3,7 @@
   "passed": true,
   "budgetKb": 100,
   "checks": {
-    "sizeKb": 9.39,
+    "sizeKb": 9.05,
     "skipLink": true,
     "mainLandmark": true,
     "visualAdapters": [

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BeautyTimeline } from "./src/timeline";
+import { BeautyTimeline, FLOW_ORDER } from "./src/timeline";
 import { BeautyGlossary } from "./src/glossary";
 
 describe("beauty: reorder", () => {
@@ -40,5 +40,23 @@ describe("beauty: glossary", () => {
     const g = new BeautyGlossary();
     const res = g.search("overflow");
     expect(res.length).toBeGreaterThan(0);
+  });
+});
+
+describe("beauty: FLOW_ORDER", () => {
+  it("declares the six canonical business stages", () => {
+    expect(FLOW_ORDER).toHaveLength(6);
+    expect(FLOW_ORDER).toEqual([
+      "agendamento",
+      "confirmacao",
+      "atendimento",
+      "pagamento",
+      "followup",
+      "overflow",
+    ]);
+  });
+
+  it("includes overflow as a first-class stage", () => {
+    expect(FLOW_ORDER).toContain("overflow");
   });
 });

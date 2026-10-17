@@ -4,7 +4,7 @@
 BeautyOps é um sistema de **contingência de bairro** para salões e nail studios. Quando um estabelecimento está lotado, ele redireciona a demanda para parceiros próximos com capacidade livre, preservando receita e criando efeito rede.
 
 ## 2. Problema
-- Salões recebem 90–120 chamadas no Instagram, mas atendem ~20–50 clientes por semana.
+- **Hipótese a validar no piloto:** profissionais da região recusam um volume relevante de solicitações por semana por falta de capacidade. O volume real ainda não foi medido — ver §16.
 - Cliente quer rapidez; salão perde receita por falta de encaixe.
 - Pequenos salões têm ociosidade; grandes têm fila.
 - Não existe fallback local padronizado.
@@ -110,5 +110,21 @@ Preço mínimo = (custo base + custo variável) / (1 - margem)
 - **O raio padrão é 5 km?** Sim, configurável até 8 km por bairro.
 - **A aprovação é manual?** Sim, inicialmente; automação depois.
 - **O modelo de receita é fixo ou percentual?** Híbrido, conforme persona e maturidade.
-EOF
-echo "docs created"
+
+## 16. Fontes e proveniência de dados
+
+Nenhum número entra neste documento sem origem registrada. Antes de publicar um dado de mercado, anotar:
+
+| Campo | Exemplo |
+| --- | --- |
+| Afirmação | "Profissionais recusam X solicitações/semana" |
+| Origem | URL do relatório, interviewed, ou "medição própria" |
+| Data de acesso | YYYY-MM-DD |
+| Método | Como a amostra foi coletada, n, recorte geográfico |
+| Limite | O que a fonte não permite concluir |
+
+Sem esses campos, a afirmação é **hipótese** e fica marcada como tal no texto — nunca como fato de mercado.
+
+### Estado atual das afirmações
+- Volume de solicitações recusadas: **hipótese**, ainda não medida. Será medida no piloto de 14 dias.
+- Conversão da rede, taxa de aceite e renovação: **não existem dados**. Nenhuma alegação de resultado pode ser feita até que existam.
