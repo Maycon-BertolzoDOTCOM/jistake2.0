@@ -188,6 +188,7 @@ hub/
 │   ├── status-engine/        # StatusProvider, semáforo, certificados
 │   ├── command-palette/      # Fuzzy search, aria-activedescendant, atalhos
 │   ├── deception/            # DeceptionConsole, métricas MITRE Engage
+│   ├── capacity-engine/      # Capacidade disponível: solicitações, compatibilidade, handoff (ADR-003)
 │   └── reactor-config/       # Extension points, PluginManifest, validação
 ├── plugins/
 │   ├── security/             # SecurityOps (JISTake2.0)

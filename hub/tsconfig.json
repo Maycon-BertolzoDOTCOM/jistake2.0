@@ -25,6 +25,9 @@
       "path": "./core/ai-memory"
     },
     {
+      "path": "./core/capacity-engine"
+    },
+    {
       "path": "./plugins/security"
     },
     {
