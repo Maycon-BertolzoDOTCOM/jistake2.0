@@ -2,11 +2,16 @@ import { CompatibilityCriterion } from "./contribution";
 import { CriterionContext, CriterionResult } from "./types";
 
 function ok(reason: string): CriterionResult {
-  return { passed: true, reason };
+  return { passed: true, reason, inconclusive: false };
 }
 
 function fail(reason: string): CriterionResult {
-  return { passed: false, reason };
+  return { passed: false, reason, inconclusive: false };
+}
+
+/** Bloqueio por falta de dado, nao por incompatibilidade comprovada. */
+function unknown(reason: string): CriterionResult {
+  return { passed: false, reason, inconclusive: true };
 }
 
 export function acceptingCriterion(): CompatibilityCriterion {
@@ -55,7 +60,7 @@ export function radiusCriterion(): CompatibilityCriterion {
     weight: 2,
     evaluate({ request, distanceKm }: CriterionContext): CriterionResult {
       if (distanceKm === null) {
-        return { passed: false, reason: "Distance not calculated: no coordinates available", inconclusive: true };
+        return unknown("Distance not calculated: no coordinates available");
       }
       const withinRequest = distanceKm <= request.radiusKm;
       return withinRequest
@@ -72,7 +77,7 @@ export function providerReachCriterion(): CompatibilityCriterion {
     weight: 2,
     evaluate({ distanceKm, capacity }: CriterionContext): CriterionResult {
       if (distanceKm === null) {
-        return { passed: false, reason: "Distance not calculated: no coordinates available", inconclusive: true };
+        return unknown("Distance not calculated: no coordinates available");
       }
       return distanceKm <= capacity.serviceRadiusKm
         ? ok(`Within provider service radius (${distanceKm.toFixed(2)} km)`)

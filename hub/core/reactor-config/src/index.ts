@@ -43,8 +43,8 @@ export interface CapacityCriterionDescriptor {
   evaluate(context: {
     request: unknown;
     capacity: unknown;
-    distanceKm: number;
-  }): { passed: boolean; reason: string };
+    distanceKm: number | null;
+  }): { passed: boolean; reason: string; inconclusive?: boolean };
 }
 
 export interface EntityParserContribution {

@@ -25,14 +25,36 @@ const DEFAULT_THRESHOLDS: ReadinessThresholds = {
   minConfirmedProviders: 3,
   minRecordedRequests: 10,
   minCompletedHandoffs: 1,
+  minProvidersWithCoordinates: 3,
 };
 
+/**
+ * Quatro noveis distintos, deliberadamente nao colapsados em um unico booleano.
+ *
+ * 1. `operationalReady` — os dados现有 bastam para EXECUTAR o motor. Nao afirma
+ *    que existe rede, nem que um encaminhamento pode ser confirmado.
+ * 2. `regionalCapable` — ha regiao declarada suficiente para comparacao regional
+ *    entre pares. Nao produz distancia calculada.
+ * 3. `geographicallyVerifiable` — ha coordenadas suficientes para aplicar raio.
+ * 4. `readiness.status` — elegibilidade do piloto ou de recursos futuros, que
+ *    exige densidade geodesica comprovada.
+ *
+ * Um documento so com bairro declara `operationalReady: true` e
+ * `regionalCapable: true`, mas `geographicallyVerifiable: false`. Isso e
+ * intencional: permite operar a rede manualmente sem sugerir que existe
+ * encaminhamento geodesico comprovado.
+ */
 export interface BeautyCapacityReadiness {
   scope: string;
   network: ReturnType<typeof networkDensity>;
   capacityGaps: CapacityGap[];
   requestGaps: CapacityGap[];
+  /** Os dados bastam para executar o motor. Nao implica rede funcional. */
   operationalReady: boolean;
+  /** Ha regiao declarada para comparacao regional, sem distancia calculada. */
+  regionalCapable: boolean;
+  /** Ha coordenadas para aplicar raio e calcular distancia. */
+  geographicallyVerifiable: boolean;
   metrics: ReturnType<typeof computeCapacityMetrics>;
   readiness: ReturnType<typeof assessReadiness>;
   blockers: string[];
@@ -123,12 +145,17 @@ export function assessBeautyCapacity(input: ReadinessInput): BeautyCapacityReadi
     .filter((entry) => entry.blocking)
     .map((entry) => `${entry.field}: ${entry.reason}`);
 
+  const regionalCapable = network.providersRegionalOnly > 0;
+  const geographicallyVerifiable = network.providersWithCoordinates > 0;
+
   return {
     scope: BEAUTY_SCOPE,
     network,
     capacityGaps,
     requestGaps,
     operationalReady: capacities.ready && requests.ready,
+    regionalCapable,
+    geographicallyVerifiable,
     metrics,
     readiness,
     blockers,

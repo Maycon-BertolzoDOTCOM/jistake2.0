@@ -11,8 +11,13 @@ import type {
   CapacityCriteriaContribution as DeclaredContribution,
   CapacityCriterionDescriptor as DeclaredDescriptor,
 } from "@hub/reactor-config";
-import type { CapacityCriteriaContribution } from "./src/contribution";
-import type { CompatibilityCriterion } from "./src/contribution";
+import type {
+  CapacityCriteriaContribution,
+  CompatibilityCriterion,
+} from "./src/contribution";
+
+/** A implementacao real e o proprio `CompatibilityCriterion` do motor. */
+type RealDescriptor = CompatibilityCriterion;
 
 /** O contrato declarado aceita a implementacao real. */
 export const declaresRealImplementation: DeclaredContribution =
@@ -42,4 +47,32 @@ export const EXACT_DESCRIPTOR_PARITY: DeclaredDescriptorKeys extends RealDescrip
   ? RealDescriptorKeys extends DeclaredDescriptorKeys
     ? true
     : never
+  : never = true;
+
+/**
+ * Paridade de ASSINATURA do metodo `evaluate`.
+ *
+ * A paridade de chaves de topo nao pega mudanca em `distanceKm: number` para
+ * `number | null`, porque o nome da propriedade continua igual. Esta sentinela
+ * compara os tipos e falha o build quando o shape declarado e a implementacao
+ * divergem dentro do metodo.
+ */
+type DeclaredEvaluateDistance = Parameters<DeclaredDescriptor["evaluate"]>[0]["distanceKm"];
+type RealEvaluateDistance = Parameters<RealDescriptor["evaluate"]>[0]["distanceKm"];
+
+export const EVALUATE_DISTANCE_PARITY: [DeclaredEvaluateDistance] extends [RealEvaluateDistance]
+  ? [RealEvaluateDistance] extends [DeclaredEvaluateDistance]
+    ? true
+    : never
+  : never = true;
+
+type DeclaredEvaluateResult = ReturnType<DeclaredDescriptor["evaluate"]>;
+type RealEvaluateResult = ReturnType<RealDescriptor["evaluate"]>;
+
+/**
+ * O shape declarado precisa aceitar `inconclusive`, senao um plugin que
+ * sinalize bloqueio por falta de dado nao consegue expressar isso pelo contrato.
+ */
+export const EVALUATE_RESULT_PARITY: keyof RealEvaluateResult extends keyof DeclaredEvaluateResult
+  ? true
   : never = true;

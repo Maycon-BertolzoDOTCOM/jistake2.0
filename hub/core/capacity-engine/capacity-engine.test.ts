@@ -342,8 +342,11 @@ describe("location precision: absence of data is not distance zero", () => {
 
   it("marks a location-based block as inconclusive rather than a mismatch", () => {
     const result = matchRequest(request(), [capacity({ location: regional("Vila Nova") })], defaultCriteria());
-    const blockers = result.candidates[0]?.blockers.join(" ") ?? "";
-    expect(blockers).toContain("not calculated");
+    const candidate = result.candidates[0];
+    // Falta de dado NAO pode aparecer como incompatibilidade comprovada.
+    expect(candidate?.blockers.join(" ")).not.toContain("not calculated");
+    expect(candidate?.inconclusiveBlockers.join(" ")).toContain("not calculated");
+    expect(candidate?.inconclusive).toBe(true);
   });
 
   it("counts regional providers in density without faking a distance", () => {

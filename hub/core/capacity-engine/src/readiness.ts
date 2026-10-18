@@ -71,6 +71,12 @@ export const DEFAULT_THRESHOLDS: ReadinessThresholds = {
   minConfirmedProviders: 3,
   minRecordedRequests: 10,
   minCompletedHandoffs: 1,
+  /**
+   * Providers com coordenada validada. Sem isso, um gate poderia liberar o
+   * piloto contando apenas regiao declarada, que nao sustenta correspondencia
+   * geodesica.
+   */
+  minProvidersWithCoordinates: 3,
 };
 
 export function assessReadiness(
@@ -85,6 +91,13 @@ export function assessReadiness(
   }
   if (density.confirmedProviders < thresholds.minConfirmedProviders) {
     pilotGaps.push(`confirmedProviders ${density.confirmedProviders} < ${thresholds.minConfirmedProviders}`);
+  }
+  // Densidade regional NAO substitui densidade geodesica. Um bairro declarado
+  // permite operacao manual, mas nao comprova capacidade dentro de um raio.
+  if (density.providersWithCoordinates < thresholds.minProvidersWithCoordinates) {
+    pilotGaps.push(
+      `providersWithCoordinates ${density.providersWithCoordinates} < ${thresholds.minProvidersWithCoordinates}`,
+    );
   }
 
   const radarGaps: string[] = [];

@@ -71,10 +71,11 @@ export interface CriterionResult {
   passed: boolean;
   reason: string;
   /**
-   * `true` quando o bloqueio decorre de ausencia de dado, nao de incompatibilidade.
-   * Permite ao dominio contabilizar "bloqueado por falta de informacao".
+   * `true` quando o bloqueio decorre de AUSENCIA DE DADO, nao de
+   * incompatibilidade comprovada. Obrigatorio, para que todo consumidor precise
+   * decidir explicitamente o que fazer com um bloqueio por falta de informacao.
    */
-  inconclusive?: boolean;
+  inconclusive: boolean;
 }
 
 export interface CompatibilityCriterion {
@@ -88,9 +89,15 @@ export interface MatchCandidate {
   providerId: string;
   score: number;
   reasons: string[];
+  /** Incompatibilidades comprovadas. Nao inclui bloqueios por falta de dado. */
   blockers: string[];
-  /** Verdadeiro quando faltou dado para calcular distancia. Nao e o mesmo que estar longe. */
-  inconclusive?: boolean;
+  /** Bloqueios por AUSENCIA DE DADO. Distinto de `blockers`. */
+  inconclusiveBlockers: string[];
+  /**
+   * Verdadeiro quando alguma condicao nao pode ser decidida por falta de dado.
+   * Nao e o mesmo que estar comprovadamente incompativel. Obrigatorio.
+   */
+  inconclusive: boolean;
 }
 
 export interface MatchResult {
@@ -187,6 +194,12 @@ export interface ReadinessThresholds {
   minConfirmedProviders: number;
   minRecordedRequests: number;
   minCompletedHandoffs: number;
+  /**
+   * Minimo de providers com coordenada validada. Separado de
+   * `minCompatibleProviders` de proposito: regiao declarada sustenta operacao
+   * manual, mas nao sustenta correspondencia geodesica verificada.
+   */
+  minProvidersWithCoordinates: number;
 }
 
 export interface NetworkReadiness {

@@ -48,6 +48,7 @@ export function matchRequest(
 
     const reasons: string[] = [];
     const blockers: string[] = [];
+    const inconclusiveBlockers: string[] = [];
     let earned = 0;
 
     for (const criterion of criteria) {
@@ -56,24 +57,33 @@ export function matchRequest(
       if (result.passed) {
         reasons.push(label);
         earned += Math.max(criterion.weight, 0);
+      } else if (result.inconclusive) {
+        // Falta de dado nao vira incompatibilidade comprovada, e vice-versa.
+        inconclusiveBlockers.push(label);
       } else {
         blockers.push(label);
       }
     }
 
     const score = totalWeight === 0 ? 0 : earned / totalWeight;
+    const inconclusive = inconclusiveBlockers.length > 0;
     candidates.push({
       providerId: capacity.providerId,
-      score: scoreCandidate({ providerId: capacity.providerId, score, reasons, blockers }),
+      score: scoreCandidate({ providerId: capacity.providerId, score, reasons, blockers, inconclusiveBlockers, inconclusive }),
       reasons,
       blockers,
-      inconclusive: distanceKm === null,
+      inconclusiveBlockers,
+      inconclusive,
     });
   }
 
   candidates.sort((a, b) => b.score - a.score || a.providerId.localeCompare(b.providerId));
 
-  const matchableCount = candidates.filter((candidate) => candidate.blockers.length === 0).length;
+  // Compativel exige satisfazer TODAS as condicoes reais. Um bloqueio por
+  // falta de dado tambem impede a compatibilidade, mas por motivo distinto.
+  const matchableCount = candidates.filter(
+    (candidate) => candidate.blockers.length === 0 && candidate.inconclusiveBlockers.length === 0,
+  ).length;
   const inconclusiveCount = candidates.filter((candidate) => candidate.inconclusive).length;
 
   return {

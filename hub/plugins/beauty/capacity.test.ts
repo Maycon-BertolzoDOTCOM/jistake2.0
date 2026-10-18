@@ -267,6 +267,18 @@ describe("readiness: regional fallback works without coordinates", () => {
     expect(readiness.blockers).toEqual([]);
   });
 
+  it("separates the four readiness levels instead of collapsing them", () => {
+    const readiness = assessBeautyCapacity({ document: regionalDocument() });
+    // Os dados bastam para rodar...
+    expect(readiness.operationalReady).toBe(true);
+    // ...e para comparar regiao...
+    expect(readiness.regionalCapable).toBe(true);
+    // ...mas nao para aplicar raio.
+    expect(readiness.geographicallyVerifiable).toBe(false);
+    // E o gate geodesico permanece fechado.
+    expect(readiness.readiness.status).toBe("not-ready");
+  });
+
   it("counts the provider as regional, not geographic", () => {
     const readiness = assessBeautyCapacity({ document: regionalDocument() });
     expect(readiness.network.providersRegionalOnly).toBe(1);

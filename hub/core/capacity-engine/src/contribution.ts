@@ -1,5 +1,13 @@
-import type { ProviderCapacity, ServiceRequest } from "./types";
+import type { CompatibilityCriterion } from "./types";
 
+/**
+ * Contrato de extensao de capacidade, espelhando a forma declarada por
+ * `@hub/reactor-config` sem duplicar os tipos de dominio.
+ *
+ * `CompatibilityCriterion` NAO e redeclarado aqui: e reexportado de `./types`.
+ * Declarar duas vezes fez os tipos divergirem silenciosamente quando
+ * `CriterionResult.inconclusive` virou obrigatorio.
+ */
 export interface CapacityCriteriaContribution {
   scope: string;
   label: string;
@@ -7,6 +15,11 @@ export interface CapacityCriteriaContribution {
   criteria: CapacityCriterionDescriptor[];
 }
 
+/**
+ * Forma estrutural minima, compativel com `CompatibilityCriterion` do motor.
+ * `request` e `capacity` sao `unknown` porque o reactor-config e leaf e nao
+ * conhece os tipos de dominio.
+ */
 export interface CapacityCriterionDescriptor {
   id: string;
   label: string;
@@ -14,24 +27,8 @@ export interface CapacityCriterionDescriptor {
   evaluate(context: {
     request: unknown;
     capacity: unknown;
-    distanceKm: number;
-  }): { passed: boolean; reason: string };
+    distanceKm: number | null;
+  }): { passed: boolean; reason: string; inconclusive?: boolean };
 }
 
-export interface CriterionContext {
-  request: ServiceRequest;
-  capacity: ProviderCapacity;
-  distanceKm: number;
-}
-
-export interface CriterionResult {
-  passed: boolean;
-  reason: string;
-}
-
-export interface CompatibilityCriterion {
-  id: string;
-  label: string;
-  weight: number;
-  evaluate(context: CriterionContext): CriterionResult;
-}
+export type { CompatibilityCriterion };

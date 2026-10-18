@@ -373,7 +373,12 @@ export function adaptRequests(
 }
 
 function result(passed: boolean, reason: string): CriterionResult {
-  return { passed, reason };
+  return { passed, reason, inconclusive: false };
+}
+
+/** Bloqueio por falta de dado, nao por incompatibilidade comprovada. */
+function undetermined(reason: string): CriterionResult {
+  return { passed: false, reason, inconclusive: true };
 }
 
 /**
@@ -406,11 +411,7 @@ export function beautyCriteria(): CompatibilityCriterion[] {
     weight: 2,
     evaluate({ request, distanceKm }: CriterionContext): CriterionResult {
       if (distanceKm === null) {
-        return {
-          passed: false,
-          reason: "Sem coordenadas: raio nao pode ser verificado",
-          inconclusive: true,
-        };
+        return undetermined("Sem coordenadas: raio nao pode ser verificado");
       }
       const limit = Math.min(request.radiusKm, BEAUTY_MAX_RADIUS_KM);
       return distanceKm <= limit
