@@ -27,4 +27,15 @@ Thumbs.db
 escapekit-mcp/.env
 escapekit-mcp/__pycache__/
 # Chaves locais — nunca commitar.
-data/
+# Ancorado na raiz: data/ sem barra tambem casaria com pilot/data/.
+/data/
+# HUB build artifacts
+hub/dist/
+hub/**/dist/
+hub/**/*.tsbuildinfo
+hub/**/.turbo/
+hub/node_modules/
+
+# Piloto manual — dados de contato de pessoas reais. Nunca versionar.
+# Ver pilot/restrito/LEIA-ME.md
+pilot/restrito/
