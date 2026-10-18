@@ -1,8 +1,5 @@
-import {
-  CompatibilityCriterion,
-  CriterionContext,
-  CriterionResult,
-} from "./types";
+import { CompatibilityCriterion } from "./contribution";
+import { CriterionContext, CriterionResult } from "./types";
 
 function ok(reason: string): CriterionResult {
   return { passed: true, reason };

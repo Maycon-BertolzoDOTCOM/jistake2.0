@@ -69,4 +69,27 @@ describe("architecture: the package declares no runtime dependency", () => {
     const manifest = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf8"));
     expect(Object.keys(manifest.dependencies ?? {})).toEqual([]);
   });
+
+  it("depends on reactor-config as dev-only, keeping the dependency unidirectional", () => {
+    const manifest = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf8"));
+    expect(manifest.dependencies?.["@hub/reactor-config"]).toBeUndefined();
+    expect(manifest.devDependencies?.["@hub/reactor-config"]).toBeDefined();
+  });
+});
+
+describe("architecture: no build artifact leaks into the package root", () => {
+  it("emits nothing outside dist/", () => {
+    const leaked = readdirSync(__dirname).filter((name) => {
+      if (name === "dist" || name === "node_modules" || name === "src") return false;
+      return /\.d\.ts$|\.d\.ts\.map$|\.js\.map$/.test(name) || (name.endsWith(".js") && name !== "tsconfig.contract.json");
+    });
+    expect(leaked).toEqual([]);
+  });
+
+  it("keeps the contract assertion outside src so the core stays self-contained", () => {
+    const rootFiles = readdirSync(__dirname);
+    expect(rootFiles).toContain("contract.ts");
+    const srcFiles = readdirSync(SRC);
+    expect(srcFiles).not.toContain("contract.ts");
+  });
 });

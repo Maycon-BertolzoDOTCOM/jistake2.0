@@ -7,7 +7,44 @@ export interface HubContributionPoints {
   "hub.status": StatusProviderContribution;
   "hub.actions": ActionProviderContribution;
   "hub.glossary": GlossaryProviderContribution;
+  "hub.capacity": CapacityCriteriaContribution;
   [key: string]: unknown;
+}
+
+/**
+ * Contrato de capacidade: cada vertical declara como avalia se um prestador
+ * pode atender uma solicitacao.
+ *
+ * Deliberadamente declarado aqui, com forma estrutural minima, e NAO importado
+ * de `@hub/capacity-engine`. `reactor-config` e leaf e precisa continuar assim.
+ *
+ * A duplicacao e vigiada por `capacity-contract.test.ts`, que compara esta forma
+ * com a implementacao real. Se um dos lados mudar sem o outro, o build falha.
+ */
+export interface CapacityCriteriaContribution {
+  /** Roteiro logico (ex.: "beauty", "pet-grooming"). */
+  scope: string;
+  /** Rotulo legivel para UI e glossario. */
+  label: string;
+  /** Semantica de negocio, em texto. O motor nao a executa. */
+  describe(): string;
+  /** Um criterio de compatibilidade, conforme definido pelo motor. */
+  criteria: CapacityCriterionDescriptor[];
+}
+
+/**
+ * Forma estrutural de `CompatibilityCriterion` do motor. `evaluate` recebe o
+ * contexto `{ request, capacity, distanceKm }` e devolve `{ passed, reason }`.
+ */
+export interface CapacityCriterionDescriptor {
+  id: string;
+  label: string;
+  weight: number;
+  evaluate(context: {
+    request: unknown;
+    capacity: unknown;
+    distanceKm: number;
+  }): { passed: boolean; reason: string };
 }
 
 export interface EntityParserContribution {
@@ -153,7 +190,16 @@ export const HUB_EXTENSION_POINTS: ExtensionPoint<HubContributionPoints[keyof Hu
     description: "Glossário de termos do domínio",
     type: "single",
   },
+  {
+    id: "hub.capacity",
+    name: "Capacity Criteria Provider",
+    description:
+      "Declara os critérios de compatibilidade que definem se um prestador pode atender uma solicitação, sem que o motor conheça o domínio",
+    type: "multiple",
+  },
 ];
+
+export const HUB_CAPACITY_EXTENSION_POINT_ID = "hub.capacity" as const;
 
 export interface PluginManifest {
   id: string;
