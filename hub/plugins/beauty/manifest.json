@@ -9,7 +9,14 @@
   "description": "Operação de salão/unhas/nail — agenda, overflow de bairro, parceiros, no-show e receita recuperada",
   "author": "dougdemarco",
   "license": "Apache-2.0",
-  "keywords": ["beauty", "salon", "nail", "booking", "overflow", "network"],
+  "keywords": [
+    "beauty",
+    "salon",
+    "nail",
+    "booking",
+    "overflow",
+    "network"
+  ],
   "engines": {
     "node": ">=20.0.0"
   },
@@ -18,6 +25,7 @@
     "hub.timeline": "./timeline",
     "hub.status": "./status",
     "hub.actions": "./actions",
-    "hub.glossary": "./glossary"
+    "hub.glossary": "./glossary",
+    "hub.capacity": "./capacity"
   }
 }

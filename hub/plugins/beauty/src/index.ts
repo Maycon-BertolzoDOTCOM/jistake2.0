@@ -12,6 +12,7 @@ import { BeautyTimeline, beautyTimeline } from "./timeline";
 import { BeautyStatus, beautyStatus } from "./status";
 import { BeautyActions, beautyActions } from "./actions";
 import { BeautyGlossary, beautyGlossary } from "./glossary";
+import { beautyCapacityCriteria } from "./capacity";
 
 export const beautyPlugin: Extension = {
   id: "hub-beauty",
@@ -23,6 +24,7 @@ export const beautyPlugin: Extension = {
     "hub.status": beautyStatus,
     "hub.actions": beautyActions,
     "hub.glossary": beautyGlossary,
+    "hub.capacity": beautyCapacityCriteria,
   },
   activate: async () => {
     console.log("[BeautyOps] Plugin ativado");
@@ -31,6 +33,18 @@ export const beautyPlugin: Extension = {
     console.log("[BeautyOps] Plugin desativado");
   },
 };
+
+export {
+  beautyCapacityCriteria,
+  adaptCapacities,
+  adaptRequests,
+  beautyCriteria,
+  BEAUTY_SCOPE,
+  BEAUTY_DEFAULT_RADIUS_KM,
+  BEAUTY_MAX_RADIUS_KM,
+} from "./capacity";
+export { assessBeautyCapacity } from "./capacity-readiness";
+export type { CapacityGap, BeautyOperationalDocument } from "./capacity";
 
 export {
   BeautyParser,

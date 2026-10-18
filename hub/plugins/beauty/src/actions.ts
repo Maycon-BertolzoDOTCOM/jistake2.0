@@ -1,4 +1,86 @@
 import { ActionProviderContribution, CommandAction, ActionResult } from "@hub/reactor-config";
+import { matchRequest, type Handoff } from "@hub/capacity-engine";
+import {
+  adaptCapacities,
+  adaptRequests,
+  beautyCriteria,
+  BEAUTY_DEFAULT_RADIUS_KM,
+  BEAUTY_MAX_RADIUS_KM,
+  type BeautyOperationalDocument,
+} from "./capacity";
+
+/**
+ * Estado operacional injetado pelo host. Sem documento real, as acoes de
+ * capacidade respondem `success: false` com a lacuna, em vez de fingir sucesso.
+ */
+let activeDocument: BeautyOperationalDocument | null = null;
+let handoffLog: Handoff[] = [];
+
+export function setOperationalDocument(document: BeautyOperationalDocument | null): void {
+  activeDocument = document;
+}
+
+export function setHandoffLog(log: Handoff[]): void {
+  handoffLog = log;
+}
+
+export function getHandoffLog(): Handoff[] {
+  return handoffLog;
+}
+
+interface OverflowSearchOutput {
+  matched: boolean;
+  candidates: Array<{ providerId: string; score: number; reasons: string[]; blockers: string[] }>;
+  matchableCount: number;
+  blockers: string[];
+}
+
+function searchOverflow(params: Record<string, unknown>): OverflowSearchOutput {
+  if (!activeDocument) {
+    return {
+      matched: false,
+      candidates: [],
+      matchableCount: 0,
+      blockers: [
+        "Nenhum documento operacional carregado. A capacidade real da rede ainda nao foi observada.",
+      ],
+    };
+  }
+
+  const capacities = adaptCapacities(activeDocument);
+  const requests = adaptRequests(activeDocument);
+
+  const blockers = capacities.gaps
+    .concat(requests.gaps)
+    .filter((gap) => gap.blocking)
+    .map((gap) => `${gap.field}: ${gap.reason}`);
+
+  const requestId = typeof params.requestId === "string" ? params.requestId : undefined;
+  const request = requests.data.find((entry) => entry.id === requestId) ?? requests.data[0];
+
+  if (!request) {
+    return {
+      matched: false,
+      candidates: [],
+      matchableCount: 0,
+      blockers: blockers.length > 0 ? blockers : ["Nenhuma solicitacao de overflow registrada."],
+    };
+  }
+
+  const result = matchRequest(request, capacities.data, beautyCriteria());
+  return {
+    matched: result.matchableCount > 0,
+    candidates: result.candidates,
+    matchableCount: result.matchableCount,
+    blockers,
+  };
+}
+
+function clampRadius(value: unknown): number {
+  const raw = typeof value === "number" ? value : BEAUTY_DEFAULT_RADIUS_KM;
+  if (!Number.isFinite(raw) || raw <= 0) return BEAUTY_DEFAULT_RADIUS_KM;
+  return Math.min(raw, BEAUTY_MAX_RADIUS_KM);
+}
 
 export class BeautyActions implements ActionProviderContribution {
   getActions(): CommandAction[] {
@@ -45,18 +127,18 @@ export class BeautyActions implements ActionProviderContribution {
       },
       {
         id: "beauty:overflow",
-        label: "Buscar parceiro próximo",
-        description: "Busca parceiros com capacidade livre em até 5 km",
+        label: "Buscar parceiro compatível",
+        description: "Cruza a solicitação excedente com a capacidade declarada das parceiras próximas",
         category: "operation",
-        keywords: ["overflow", "parceiro", "capacidade", "bairro", "5km"],
+        keywords: ["overflow", "parceiro", "capacidade", "bairro", "raio"],
         execute: async () => {},
       },
       {
         id: "beauty:aprovar",
-        label: "Aprovar cliente overflow",
-        description: "Parceiro aprova manualmente cliente redirecionado",
+        label: "Registrar decisão da parceira",
+        description: "Registra aceite ou recusa manual da parceira sobre um encaminhamento proposto",
         category: "operation",
-        keywords: ["aprovar", "overflow", "parceiro", "manual"],
+        keywords: ["aprovar", "recusar", "overflow", "parceira", "manual"],
         execute: async () => {},
       },
       {
@@ -82,10 +164,64 @@ export class BeautyActions implements ActionProviderContribution {
         return { success: true, output: { message: `Lembrete enviado para ${params.clientId}` } };
       case "beauty:design":
         return { success: true, output: { message: `Design registrado para ${params.appointmentId}` } };
-      case "beauty:overflow":
-        return { success: true, output: { message: `Parceiros com capacidade livre em até ${params.radiusKm || 5} km` } };
-      case "beauty:aprovar":
-        return { success: true, output: { message: `Cliente ${params.clientId} aprovado pelo parceiro ${params.partnerId}` } };
+      case "beauty:overflow": {
+        const radiusKm = clampRadius(params.radiusKm);
+        const search = searchOverflow({ ...params, radiusKm });
+        if (search.blockers.length > 0 && !search.matched) {
+          return {
+            success: false,
+            error: `Capacidade real ainda não observada: ${search.blockers.join("; ")}`,
+            output: { radiusKm, blockers: search.blockers, candidates: [], matchableCount: 0 },
+          };
+        }
+        return {
+          success: true,
+          output: {
+            radiusKm,
+            matchableCount: search.matchableCount,
+            candidates: search.candidates,
+            blockers: search.blockers,
+          },
+        };
+      }
+      case "beauty:aprovar": {
+        const decision = params.decision === "declined" ? "providerDecline" : "providerConfirm";
+        const requestId = typeof params.requestId === "string" ? params.requestId : undefined;
+        const providerId = typeof params.partnerId === "string" ? params.partnerId : undefined;
+
+        if (!requestId || !providerId) {
+          return {
+            success: false,
+            error: "requestId e partnerId são obrigatórios para registrar a decisão da parceira",
+          };
+        }
+
+        handoffLog = handoffLog.filter(
+          (handoff) => !(handoff.requestId === requestId && handoff.providerId === providerId),
+        );
+        handoffLog.push({
+          id: `${requestId}:${providerId}`,
+          requestId,
+          providerId,
+          status: params.decision === "declined" ? "declined" : "accepted",
+          providerDecision: {
+            actor: "provider",
+            decision: params.decision === "declined" ? "declined" : "accepted",
+            at: new Date().toISOString(),
+          },
+          updatedAt: new Date().toISOString(),
+        });
+
+        return {
+          success: true,
+          output: {
+            requestId,
+            providerId,
+            event: decision,
+            handoffs: handoffLog.length,
+          },
+        };
+      }
       case "beauty:no-show":
         return { success: true, output: { message: `No-show registrado para ${params.appointmentId}` } };
       default:

@@ -47,6 +47,9 @@
     },
     {
       "path": "../../core/contentforge"
+    },
+    {
+      "path": "../../core/capacity-engine"
     }
   ]
 }
