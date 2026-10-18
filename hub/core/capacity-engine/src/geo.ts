@@ -1,4 +1,4 @@
-import { GeoPoint } from "./types";
+import { GeoPoint, LocationPrecision } from "./types";
 
 const EARTH_RADIUS_KM = 6371;
 
@@ -30,6 +30,20 @@ export function assertValidGeoPoint(point: GeoPoint): void {
 
 function toRadians(degrees: number): number {
   return (degrees * Math.PI) / 180;
+}
+
+/**
+ * Calcula distancia apenas quando AMBAS as pontas tem coordenadas validas.
+ * Retorna `null` quando nao ha dado suficiente. `null` nunca e `0`: zero e uma
+ * distancia calculada, `null` e a ausencia dela.
+ */
+export function tryHaversineKm(
+  from: LocationPrecision,
+  to: LocationPrecision,
+): number | null {
+  if (from.mode !== "coordinates" || to.mode !== "coordinates") return null;
+  if (!isValidGeoPoint(from.point) || !isValidGeoPoint(to.point)) return null;
+  return haversineKm(from.point, to.point);
 }
 
 export function haversineKm(from: GeoPoint, to: GeoPoint): number {

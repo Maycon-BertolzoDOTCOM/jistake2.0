@@ -1,3 +1,8 @@
+import {
+  resolveLocation,
+  type ProviderLocation,
+  type RawLocation,
+} from "./location";
 import type {
   CapacityCriteriaContribution as DeclaredContribution,
   CapacityCriterionDescriptor as DeclaredDescriptor,
@@ -50,14 +55,25 @@ export interface BeautyOperationalDocument {
     id: string;
     capacity?: number;
     radiusKm?: number;
-    location?: GeoInput;
+    /** Campo legado em texto. Nunca convertido em coordenada. */
+    address?: string;
+    location?: GeoInput & RawLocation;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
   };
   services?: Array<{ id: string; price: number; durationMinutes?: number }>;
   professionals?: Array<{
     id: string;
     specialties?: string[];
     availability?: string[];
-    location?: GeoInput;
+    address?: string;
+    location?: GeoInput & RawLocation;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    /** Alcance: ate onde aceita atender. Distinto de onde esta. */
+    reachKm?: number;
     weeklyCapacity?: number;
     accepting?: boolean;
     confirmed?: boolean;
@@ -136,14 +152,34 @@ export function adaptCapacities(
   const capacities: ProviderCapacity[] = [];
 
   for (const professional of professionals) {
-    if (!professional.location) {
+    const resolution = resolveLocation({
+      ...(professional.location ?? {}),
+      neighborhood: professional.neighborhood,
+      city: professional.city,
+      state: professional.state,
+      address: professional.address ?? professional.location?.address,
+    });
+
+    if (resolution.location.mode === "unknown") {
       gaps.push(
         gap(
           `professionals.${professional.id}.location`,
-          "Sem coordenadas. Endereco em texto nao permite calcular distancia sem geocodificacao.",
+          resolution.invalidCoordinates === true
+            ? "Coordenada presente e invalida. Nao convertida em zero nem em bairro."
+            : "Localizacao insuficiente. Sem coordenadas nem regiao declarada nao ha o que comparar.",
         ),
       );
       continue;
+    }
+
+    if (resolution.invalidCoordinates) {
+      gaps.push(
+        gap(
+          `professionals.${professional.id}.location`,
+          "Coordenada invalida foi rejeitada; regiao declarada foi usada.",
+          false,
+        ),
+      );
     }
 
     if (!professional.availability || professional.availability.length === 0) {
@@ -180,8 +216,9 @@ export function adaptCapacities(
     capacities.push({
       providerId: professional.id,
       serviceIds: professional.specialties ?? [],
-      location: professional.location,
-      serviceRadiusKm: document.salon?.radiusKm ?? BEAUTY_DEFAULT_RADIUS_KM,
+      location: resolution.location,
+      serviceRadiusKm:
+        professional.reachKm ?? document.salon?.radiusKm ?? BEAUTY_DEFAULT_RADIUS_KM,
       windows,
       weeklyCapacity: professional.weeklyCapacity ?? document.salon?.capacity ?? 0,
       accepting: professional.accepting ?? false,
@@ -217,11 +254,29 @@ export function adaptRequests(
   const now = new Date().toISOString();
   const clientsById = new Map((document.clients ?? []).map((client) => [client.id, client]));
 
-  if (!document.salon?.location) {
+  const salonResolution = resolveLocation({
+    ...(document.salon?.location ?? {}),
+    neighborhood: document.salon?.neighborhood,
+    city: document.salon?.city,
+    state: document.salon?.state,
+    address: document.salon?.address,
+  });
+
+  if (salonResolution.location.mode === "unknown") {
     gaps.push(
       gap(
         "salon.location",
-        "Sem coordenadas do salao. Nenhuma solicitacao pode ser geodesicamente qualificada.",
+        salonResolution.invalidCoordinates === true
+          ? "Coordenada do salao presente e invalida. Nenhuma solicitacao pode ser geodesicamente qualificada."
+          : "Sem coordenadas nem regiao declarada para o salao. Nenhuma solicitacao pode ser qualificada.",
+      ),
+    );
+  } else if (salonResolution.location.mode === "neighborhood") {
+    gaps.push(
+      gap(
+        "salon.location",
+        "Somente regiao declarada. Correspondencia regional e possivel, distancia nao.",
+        false,
       ),
     );
   }
@@ -258,7 +313,7 @@ export function adaptRequests(
   );
 
   for (const appointment of overflow) {
-    if (!document.salon?.location) continue;
+    if (salonResolution.location.mode === "unknown") continue;
 
     const client = clientsById.get(appointment.clientId);
     const consent = client?.consent === true;
@@ -298,9 +353,9 @@ export function adaptRequests(
     requests.push({
       id: appointment.id,
       origin: "referral",
-      requesterId: appointment.overflowFrom ?? document.salon.id,
+      requesterId: appointment.overflowFrom ?? document.salon!.id,
       serviceId: appointment.serviceId,
-      location: document.salon.location,
+      location: salonResolution.location,
       radiusKm,
       window: {
         start: appointment.start,
@@ -350,6 +405,13 @@ export function beautyCriteria(): CompatibilityCriterion[] {
     label: "Dentro do raio do bairro",
     weight: 2,
     evaluate({ request, distanceKm }: CriterionContext): CriterionResult {
+      if (distanceKm === null) {
+        return {
+          passed: false,
+          reason: "Sem coordenadas: raio nao pode ser verificado",
+          inconclusive: true,
+        };
+      }
       const limit = Math.min(request.radiusKm, BEAUTY_MAX_RADIUS_KM);
       return distanceKm <= limit
         ? result(true, `Dentro do raio de ${limit} km`)

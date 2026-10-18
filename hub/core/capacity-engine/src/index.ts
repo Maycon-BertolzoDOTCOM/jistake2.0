@@ -1,5 +1,11 @@
 export * from "./types";
-export { haversineKm, isValidGeoPoint, assertValidGeoPoint, InvalidCoordinateError } from "./geo";
+export {
+  haversineKm,
+  tryHaversineKm,
+  isValidGeoPoint,
+  assertValidGeoPoint,
+  InvalidCoordinateError,
+} from "./geo";
 export {
   acceptingCriterion,
   confirmedCapacityCriterion,

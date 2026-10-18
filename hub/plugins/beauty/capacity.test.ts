@@ -229,6 +229,72 @@ describe("beauty criteria: domain rules live in the plugin", () => {
   });
 });
 
+describe("readiness: regional fallback works without coordinates", () => {
+  function regionalDocument(): BeautyOperationalDocument {
+    return {
+      salon: { id: "salon-1", neighborhood: "Vila Nova York", city: "Sao Paulo", state: "SP" },
+      services: [{ id: "manicure", price: 60, durationMinutes: 60 }],
+      professionals: [
+        {
+          id: "p1",
+          specialties: ["manicure"],
+          availability: [SLOT],
+          neighborhood: "Vila Nova York",
+          city: "Sao Paulo",
+          state: "SP",
+          weeklyCapacity: 10,
+          accepting: true,
+          confirmed: true,
+        },
+      ],
+      appointments: [
+        {
+          id: "ap-1",
+          clientId: "c1",
+          serviceId: "manicure",
+          start: NOW,
+          status: "pending",
+          overflowFrom: "salon-1",
+        },
+      ],
+      clients: [{ id: "c1", consent: true }],
+    };
+  }
+
+  it("is operational with only a declared neighborhood", () => {
+    const readiness = assessBeautyCapacity({ document: regionalDocument() });
+    expect(readiness.operationalReady).toBe(true);
+    expect(readiness.blockers).toEqual([]);
+  });
+
+  it("counts the provider as regional, not geographic", () => {
+    const readiness = assessBeautyCapacity({ document: regionalDocument() });
+    expect(readiness.network.providersRegionalOnly).toBe(1);
+    expect(readiness.network.providersWithCoordinates).toBe(0);
+  });
+
+  it("never turns a regional provider into a matchable count", () => {
+    const readiness = assessBeautyCapacity({ document: regionalDocument() });
+    expect(readiness.metrics.matchableCount).toBe(0);
+    expect(readiness.metrics.completedCount).toBe(0);
+  });
+
+  it("records the regional limitation as a non-blocking gap", () => {
+    const readiness = assessBeautyCapacity({ document: regionalDocument() });
+    expect(readiness.requestGaps.some((gap) => gap.reason.includes("Somente regiao"))).toBe(true);
+    expect(readiness.requestGaps.filter((gap) => gap.reason.includes("Somente regiao")).every((gap) => !gap.blocking)).toBe(true);
+  });
+});
+
+describe("readiness: acceptance is never presumed", () => {
+  it("produces no matches when no professional declared acceptance", () => {
+    const document = completeDocument();
+    document.professionals = document.professionals?.map((p) => ({ ...p, accepting: false }));
+    const readiness = assessBeautyCapacity({ document });
+    expect(readiness.metrics.matchableCount).toBe(0);
+  });
+});
+
 describe("readiness: the pilot gate reflects reality", () => {
   it("is not ready with a single provider and no recorded requests", () => {
     const readiness = assessBeautyCapacity({ document: completeDocument() });

@@ -1,11 +1,13 @@
 import {
   assessReadiness,
+  type LocationPrecision,
   computeCapacityMetrics,
   matchRequest,
   networkDensity,
   type Handoff,
   type ReadinessThresholds,
 } from "@hub/capacity-engine";
+import { resolveLocation } from "./location";
 import {
   adaptCapacities,
   adaptRequests,
@@ -41,7 +43,7 @@ export interface ReadinessInput {
   handoffs?: Handoff[];
   completedHandoffs?: number;
   thresholds?: ReadinessThresholds;
-  center?: { lat: number; lng: number };
+  center?: LocationPrecision;
 }
 
 function unique(gaps: CapacityGap[]): CapacityGap[] {
@@ -60,9 +62,15 @@ export function assessBeautyCapacity(input: ReadinessInput): BeautyCapacityReadi
     input.document,
   );
 
-  const center =
-    input.center ??
-    input.document.salon?.location ?? { lat: 0, lng: 0 };
+  const salonResolution = resolveLocation({
+    ...(input.document.salon?.location ?? {}),
+    neighborhood: input.document.salon?.neighborhood,
+    city: input.document.salon?.city,
+    state: input.document.salon?.state,
+    address: input.document.salon?.address,
+  });
+
+  const center = input.center ?? salonResolution.location;
 
   const serviceId = requests.data[0]?.serviceId ?? "";
   const network = networkDensity(
@@ -74,15 +82,24 @@ export function assessBeautyCapacity(input: ReadinessInput): BeautyCapacityReadi
   );
 
   const handoffs = input.handoffs ?? [];
-  const matchableCount = requests.data.reduce((total, request) => {
+  let matchableCount = 0;
+  let inconclusiveCount = 0;
+  for (const request of requests.data) {
     const result = matchRequest(request, capacities.data, beautyCriteria());
-    return total + result.matchableCount;
-  }, 0);
+    matchableCount += result.matchableCount;
+    inconclusiveCount += result.inconclusiveCount;
+  }
 
   const blockedReasons = capacities.gaps
     .concat(requests.gaps)
     .filter((entry) => entry.blocking)
     .map((entry) => entry.reason);
+
+  if (inconclusiveCount > 0) {
+    blockedReasons.push(
+      `${inconclusiveCount} par(es) sem evidencia geodesica suficiente. Bloqueados por falta de dado, nao por incompatibilidade.`,
+    );
+  }
 
   const metrics = computeCapacityMetrics({
     requestsReceived: requests.data.length,

@@ -54,6 +54,9 @@ export function radiusCriterion(): CompatibilityCriterion {
     label: "Within requested radius",
     weight: 2,
     evaluate({ request, distanceKm }: CriterionContext): CriterionResult {
+      if (distanceKm === null) {
+        return { passed: false, reason: "Distance not calculated: no coordinates available", inconclusive: true };
+      }
       const withinRequest = distanceKm <= request.radiusKm;
       return withinRequest
         ? ok(`Within requested radius (${distanceKm.toFixed(2)} km)`)
@@ -68,6 +71,9 @@ export function providerReachCriterion(): CompatibilityCriterion {
     label: "Provider serves this distance",
     weight: 2,
     evaluate({ distanceKm, capacity }: CriterionContext): CriterionResult {
+      if (distanceKm === null) {
+        return { passed: false, reason: "Distance not calculated: no coordinates available", inconclusive: true };
+      }
       return distanceKm <= capacity.serviceRadiusKm
         ? ok(`Within provider service radius (${distanceKm.toFixed(2)} km)`)
         : fail(`Beyond provider service radius (${distanceKm.toFixed(2)} km)`);

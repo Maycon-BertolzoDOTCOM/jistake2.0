@@ -1,30 +1,54 @@
 import {
+  LocationPrecision,
   NetworkDensity,
   NetworkReadiness,
   ProviderCapacity,
   ReadinessStatus,
   ReadinessThresholds,
 } from "./types";
-import { haversineKm, isValidGeoPoint } from "./geo";
+import { tryHaversineKm } from "./geo";
 
 export function networkDensity(
   capacities: ProviderCapacity[],
   serviceId: string,
   radiusKm: number,
-  center: { lat: number; lng: number },
+  center: LocationPrecision,
   verticalScope = "generic",
 ): NetworkDensity {
   let compatible = 0;
   let accepting = 0;
   let confirmed = 0;
+  let withCoordinates = 0;
+  let regionalOnly = 0;
+  let withoutLocation = 0;
 
   for (const capacity of capacities) {
     if (!capacity.serviceIds.includes(serviceId)) continue;
-    if (!isValidGeoPoint(capacity.location)) continue;
-    if (haversineKm(center, capacity.location) > radiusKm) continue;
+
+    // Densidade por bairro declarado e um sinal diferente de densidade
+    // geodesica: e contado, porem nunca se disfarca de distancia calculada.
+    const distanceKm = tryHaversineKm(center, capacity.location);
+
+    if (capacity.location.mode === "unknown") {
+      withoutLocation += 1;
+      continue;
+    }
+    if (capacity.location.mode === "neighborhood") {
+      regionalOnly += 1;
+      compatible += 1;
+      if (capacity.accepting) accepting += 1;
+      if (capacity.confirmed) confirmed += 1;
+      continue;
+    }
+    if (distanceKm === null) {
+      withoutLocation += 1;
+      continue;
+    }
+    if (distanceKm > radiusKm) continue;
     if (capacity.serviceRadiusKm < radiusKm) continue;
 
     compatible += 1;
+    withCoordinates += 1;
     if (capacity.accepting) accepting += 1;
     if (capacity.confirmed) confirmed += 1;
   }
@@ -36,6 +60,9 @@ export function networkDensity(
     compatibleProviders: compatible,
     acceptingProviders: accepting,
     confirmedProviders: confirmed,
+    providersWithCoordinates: withCoordinates,
+    providersRegionalOnly: regionalOnly,
+    providersWithoutLocation: withoutLocation,
   };
 }
 

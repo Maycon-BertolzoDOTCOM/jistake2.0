@@ -17,9 +17,11 @@ import {
   isValidGeoPoint,
   matchRequest,
   networkDensity,
+  tryHaversineKm,
 } from "./src/index";
 
 const SAO_PAULO = { lat: -23.5505, lng: -46.6333 };
+const at = (lat: number, lng: number) => ({ mode: "coordinates" as const, point: { lat, lng } });
 
 function request(overrides: Partial<ServiceRequest> = {}): ServiceRequest {
   return {
@@ -27,7 +29,7 @@ function request(overrides: Partial<ServiceRequest> = {}): ServiceRequest {
     origin: "referral",
     requesterId: "prov-a",
     serviceId: "svc-1",
-    location: SAO_PAULO,
+    location: at(SAO_PAULO.lat, SAO_PAULO.lng),
     radiusKm: 5,
     window: { start: "2026-03-02T09:00:00.000Z", end: "2026-03-02T18:00:00.000Z" },
     urgency: "normal",
@@ -42,7 +44,7 @@ function capacity(overrides: Partial<ProviderCapacity> = {}): ProviderCapacity {
   return {
     providerId: "prov-b",
     serviceIds: ["svc-1"],
-    location: SAO_PAULO,
+    location: at(SAO_PAULO.lat, SAO_PAULO.lng),
     serviceRadiusKm: 10,
     windows: [{ start: "2026-03-02T10:00:00.000Z", end: "2026-03-02T15:00:00.000Z" }],
     weeklyCapacity: 5,
@@ -140,7 +142,7 @@ describe("matching", () => {
 
   it("blocks when the provider is beyond the requested radius", () => {
     const far = { lat: -23.7, lng: -46.8 };
-    const result = matchRequest(request({ radiusKm: 1 }), [capacity({ location: far })], defaultCriteria());
+    const result = matchRequest(request({ radiusKm: 1 }), [capacity({ location: at(far.lat, far.lng) })], defaultCriteria());
     expect(result.matchableCount).toBe(0);
     expect(result.candidates[0]?.blockers.join(" ")).toContain("Outside requested radius");
   });
@@ -273,42 +275,106 @@ describe("readiness", () => {
   ];
 
   it("counts only compatible providers in range", () => {
-    const density = networkDensity(three, "svc-1", 5, SAO_PAULO, "beauty");
+    const density = networkDensity(three, "svc-1", 5, at(SAO_PAULO.lat, SAO_PAULO.lng), "beauty");
     expect(density.compatibleProviders).toBe(3);
     expect(density.verticalScope).toBe("beauty");
   });
 
   it("ignores providers outside the radius", () => {
-    const density = networkDensity([...three, capacity({ providerId: "far", location: { lat: -23.8, lng: -46.9 } })], "svc-1", 5, SAO_PAULO);
+    const density = networkDensity([...three, capacity({ providerId: "far", location: at(-23.8, -46.9) })], "svc-1", 5, at(SAO_PAULO.lat, SAO_PAULO.lng));
     expect(density.compatibleProviders).toBe(3);
   });
 
   it("is not-ready below the pilot threshold", () => {
-    const density = networkDensity([capacity({ providerId: "p1" })], "svc-1", 5, SAO_PAULO);
+    const density = networkDensity([capacity({ providerId: "p1" })], "svc-1", 5, at(SAO_PAULO.lat, SAO_PAULO.lng));
     const readiness = assessReadiness(density, 50, 50);
     expect(readiness.status).toBe("not-ready");
     expect(readiness.unmet.join(" ")).toContain("compatibleProviders 1 < 3");
   });
 
   it("is pilot-eligible once enough providers exist, before any volume", () => {
-    const density = networkDensity(three, "svc-1", 5, SAO_PAULO);
+    const density = networkDensity(three, "svc-1", 5, at(SAO_PAULO.lat, SAO_PAULO.lng));
     expect(assessReadiness(density, 0, 0).status).toBe("pilot-eligible");
   });
 
   it("is pilot-eligible with providers but no volume yet", () => {
-    const density = networkDensity(three, "svc-1", 5, SAO_PAULO);
+    const density = networkDensity(three, "svc-1", 5, at(SAO_PAULO.lat, SAO_PAULO.lng));
     const readiness = assessReadiness(density, 10, 0);
     expect(readiness.status).toBe("pilot-eligible");
     expect(readiness.unmet.join(" ")).toContain("completedHandoffs");
   });
 
   it("only becomes radar-eligible once the pilot actually produced outcomes", () => {
-    const density = networkDensity(three, "svc-1", 5, SAO_PAULO);
+    const density = networkDensity(three, "svc-1", 5, at(SAO_PAULO.lat, SAO_PAULO.lng));
     expect(assessReadiness(density, 12, 1).status).toBe("radar-eligible");
   });
 
   it("exposes the documented gate thresholds", () => {
     expect(DEFAULT_THRESHOLDS.minCompatibleProviders).toBe(3);
     expect(DEFAULT_THRESHOLDS.minRecordedRequests).toBe(10);
+  });
+});
+
+
+describe("location precision: absence of data is not distance zero", () => {
+  const regional = (name: string, city?: string, state?: string) => ({
+    mode: "neighborhood" as const,
+    neighborhood: name,
+    city,
+    state,
+  });
+
+  it("returns null when either side lacks coordinates", () => {
+    expect(tryHaversineKm(at(-23.55, -46.63), regional("Vila Nova"))).toBeNull();
+    expect(tryHaversineKm(regional("Vila Nova"), at(-23.55, -46.63))).toBeNull();
+    expect(tryHaversineKm(regional("A", "SP"), regional("A", "SP"))).toBeNull();
+  });
+
+  it("returns zero only for genuinely identical coordinates", () => {
+    expect(tryHaversineKm(at(0, 0), at(0, 0))).toBe(0);
+  });
+
+  it("keeps a regional provider visible instead of discarding it", () => {
+    const result = matchRequest(request(), [capacity({ location: regional("Vila Nova") })], defaultCriteria());
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0]?.inconclusive).toBe(true);
+  });
+
+  it("marks a location-based block as inconclusive rather than a mismatch", () => {
+    const result = matchRequest(request(), [capacity({ location: regional("Vila Nova") })], defaultCriteria());
+    const blockers = result.candidates[0]?.blockers.join(" ") ?? "";
+    expect(blockers).toContain("not calculated");
+  });
+
+  it("counts regional providers in density without faking a distance", () => {
+    const density = networkDensity(
+      [
+        capacity({ providerId: "geo" }),
+        capacity({ providerId: "region", location: regional("Vila Nova", "Sao Paulo") }),
+      ],
+      "svc-1",
+      5,
+      at(SAO_PAULO.lat, SAO_PAULO.lng),
+    );
+    expect(density.compatibleProviders).toBe(2);
+    expect(density.providersWithCoordinates).toBe(1);
+    expect(density.providersRegionalOnly).toBe(1);
+    expect(density.providersWithoutLocation).toBe(0);
+  });
+
+  it("counts unknown-location providers separately from compatible ones", () => {
+    const density = networkDensity(
+      [capacity({ providerId: "geo" }), capacity({ providerId: "none", location: { mode: "unknown" } })],
+      "svc-1",
+      5,
+      at(SAO_PAULO.lat, SAO_PAULO.lng),
+    );
+    expect(density.compatibleProviders).toBe(1);
+    expect(density.providersWithoutLocation).toBe(1);
+  });
+
+  it("exposes inconclusive candidates on the result", () => {
+    const result = matchRequest(request(), [capacity({ location: { mode: "unknown" } })], defaultCriteria());
+    expect(result.inconclusiveCount).toBe(1);
   });
 });

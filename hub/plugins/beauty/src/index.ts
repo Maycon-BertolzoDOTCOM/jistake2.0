@@ -44,6 +44,30 @@ export {
   BEAUTY_MAX_RADIUS_KM,
 } from "./capacity";
 export { assessBeautyCapacity } from "./capacity-readiness";
+export {
+  resolveLocation,
+  normalizeNeighborhood,
+  sameNeighborhood,
+} from "./location";
+export type {
+  ProviderLocation,
+  LocationResolution,
+  RawLocation,
+} from "./location";
+export {
+  matchGeographically,
+  matchRegionally,
+  matchByAvailablePrecision,
+  canMatchOnLocation,
+  isVerifiedEvidence,
+} from "./location-matching";
+export type { GeographicMatch, RegionalMatch, LocationMatch } from "./location-matching";
+export { auditLocationMatching } from "./location-audit";
+export type {
+  LocationAuditEntry,
+  LocationPrecisionSummary,
+  LocationAuditReason,
+} from "./location-audit";
 export type { CapacityGap, BeautyOperationalDocument } from "./capacity";
 
 export {

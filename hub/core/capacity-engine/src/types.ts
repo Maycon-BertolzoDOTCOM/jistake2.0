@@ -19,7 +19,7 @@ export interface ServiceRequest {
   origin: RequestOrigin;
   requesterId: string;
   serviceId: string;
-  location: GeoPoint;
+  location: LocationPrecision;
   radiusKm: number;
   window: ServiceWindow;
   urgency: Urgency;
@@ -33,7 +33,7 @@ export interface ServiceRequest {
 export interface ProviderCapacity {
   providerId: string;
   serviceIds: string[];
-  location: GeoPoint;
+  location: LocationPrecision;
   serviceRadiusKm: number;
   windows: ServiceWindow[];
   weeklyCapacity: number;
@@ -42,15 +42,39 @@ export interface ProviderCapacity {
   updatedAt: string;
 }
 
+/**
+ * Onde um prestador atende ou onde a demanda foi manifestada.
+ *
+ * `coordinates` permite calcular distancia. `neighborhood` permite apenas
+ * comparacao regional declarada. `unknown` nao sustenta nenhum calculo.
+ *
+ * Um prestador com localizacao apenas regional ou desconhecida NAO e descartado
+ * em silencio: ele aparece sem evidencia geodesica, e o dominio decide.
+ */
+export type LocationPrecision =
+  | { mode: "coordinates"; point: GeoPoint }
+  | { mode: "neighborhood"; neighborhood: string; city?: string; state?: string }
+  | { mode: "unknown" };
+
 export interface CriterionContext {
   request: ServiceRequest;
   capacity: ProviderCapacity;
-  distanceKm: number;
+  /**
+   * Distancia em km, ou `null` quando nao ha coordenadas suficientes.
+   * `null` significa "nao calculado" e e distinto de `0`, que e uma distancia
+   * real de zero.
+   */
+  distanceKm: number | null;
 }
 
 export interface CriterionResult {
   passed: boolean;
   reason: string;
+  /**
+   * `true` quando o bloqueio decorre de ausencia de dado, nao de incompatibilidade.
+   * Permite ao dominio contabilizar "bloqueado por falta de informacao".
+   */
+  inconclusive?: boolean;
 }
 
 export interface CompatibilityCriterion {
@@ -65,6 +89,8 @@ export interface MatchCandidate {
   score: number;
   reasons: string[];
   blockers: string[];
+  /** Verdadeiro quando faltou dado para calcular distancia. Nao e o mesmo que estar longe. */
+  inconclusive?: boolean;
 }
 
 export interface MatchResult {
@@ -72,6 +98,8 @@ export interface MatchResult {
   candidates: MatchCandidate[];
   potentialRecoverable: number;
   matchableCount: number;
+  /** Candidatos sem evidencia geodesica suficiente. */
+  inconclusiveCount: number;
 }
 
 export interface OpportunityEstimate {
@@ -144,6 +172,12 @@ export interface NetworkDensity {
   compatibleProviders: number;
   acceptingProviders: number;
   confirmedProviders: number;
+  /** Compatibilidade verificada por distancia calculada. */
+  providersWithCoordinates: number;
+  /** Compatibilidade por regiao declarada. Sem distancia calculada. */
+  providersRegionalOnly: number;
+  /** Sem localizacao alguma. Nao sustenta nenhuma contagem. */
+  providersWithoutLocation: number;
 }
 
 export type ReadinessStatus = "not-ready" | "pilot-eligible" | "radar-eligible";

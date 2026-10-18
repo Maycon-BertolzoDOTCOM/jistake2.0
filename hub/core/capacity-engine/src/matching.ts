@@ -6,7 +6,7 @@ import {
   ProviderCapacity,
   ServiceRequest,
 } from "./types";
-import { haversineKm, isValidGeoPoint } from "./geo";
+import { tryHaversineKm } from "./geo";
 
 export function estimateOpportunity(
   excessDemand: number,
@@ -39,9 +39,11 @@ export function matchRequest(
 
   for (const capacity of capacities) {
     if (capacity.providerId === request.requesterId) continue;
-    if (!isValidGeoPoint(capacity.location)) continue;
 
-    const distanceKm = haversineKm(request.location, capacity.location);
+    // Sem coordenadas, a distancia e desconhecida: o candidato e avaliado
+    // assim mesmo, com distanceKm null. Descartar aqui esconderia prestadores
+    // que so tem regiao declarada.
+    const distanceKm = tryHaversineKm(request.location, capacity.location);
     const context = { request, capacity, distanceKm };
 
     const reasons: string[] = [];
@@ -59,22 +61,26 @@ export function matchRequest(
       }
     }
 
+    const score = totalWeight === 0 ? 0 : earned / totalWeight;
     candidates.push({
       providerId: capacity.providerId,
-      score: scoreCandidate({ providerId: capacity.providerId, score: totalWeight === 0 ? 0 : earned / totalWeight, reasons, blockers }),
+      score: scoreCandidate({ providerId: capacity.providerId, score, reasons, blockers }),
       reasons,
       blockers,
+      inconclusive: distanceKm === null,
     });
   }
 
   candidates.sort((a, b) => b.score - a.score || a.providerId.localeCompare(b.providerId));
 
   const matchableCount = candidates.filter((candidate) => candidate.blockers.length === 0).length;
+  const inconclusiveCount = candidates.filter((candidate) => candidate.inconclusive).length;
 
   return {
     requestId: request.id,
     candidates,
     potentialRecoverable: matchableCount,
     matchableCount,
+    inconclusiveCount,
   };
 }
