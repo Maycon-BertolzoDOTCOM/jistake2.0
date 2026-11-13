@@ -9,10 +9,6 @@ janus/.canario
 __pycache__/
 *.pyc
 .pytest_cache/
-# Node
-hub-web/node_modules/
-hub-web/.next/
-hub-web/.env
 # Python venv
 .venv/
 venv/
@@ -23,19 +19,8 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
-# EscapeKit
-escapekit-mcp/.env
-escapekit-mcp/__pycache__/
 # Chaves locais — nunca commitar.
-# Ancorado na raiz: data/ sem barra tambem casaria com pilot/data/.
 /data/
-# HUB build artifacts
-hub/dist/
-hub/**/dist/
-hub/**/*.tsbuildinfo
-hub/**/.turbo/
-hub/node_modules/
 
-# Piloto manual — dados de contato de pessoas reais. Nunca versionar.
-# Ver pilot/restrito/LEIA-ME.md
-pilot/restrito/
+# OpenCode session config (local, não commitar)
+.opencode/

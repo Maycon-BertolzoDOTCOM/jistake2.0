@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from janus.links.parser import resolver
 from janus.queue import gate
+from janus.queue import memory
 from janus.queue.scheduler import com_retry, parado
 from janus.queue.state import atualizar
 from janus.runner import evaluator
@@ -131,7 +132,11 @@ async def processar_link(item: dict, registry: dict, cfg: dict) -> dict:
                         face_a={"taxa_falha": round(taxa_falha, 3), "resultados": resultados,
                                 "piores_embed": piores, "canais_vazados": canais},
                         face_b=None, greenlight=greenlight, achados=achados)
+        memory.record_job_result(item, {"status": "concluido", "taxa_falha": taxa_falha,
+                                       "achados": achados, "resultados": resultados},
+                                gpt, cfg)
         return {"link": link, "status": "concluido", "taxa_falha": taxa_falha, "achados": achados}
     except Exception as e:
         await atualizar(link, status="falhou", erro=f"{type(e).__name__}: {e}")
+        memory.record_job_result(item, {"status": "falhou", "erro": str(e)}, gpt, cfg)
         return {"link": link, "status": "falhou", "erro": str(e)}

@@ -47,9 +47,9 @@ def gerar(data_dir: str | Path) -> Path:
         md.append("Nenhum achado grave/crítico.")
     (data_dir / "consolidado.md").write_text("\n".join(md) + "\n", encoding="utf-8")
 
-    # JSON legível por máquina — consumido pelo HUB (/v1/hub/achados).
+    # JSON legível por máquina — consumido por clientes/relatórios downstream.
     # Evidências truncadas em 200 chars; canário real NUNCA aqui em produção
-    # (só redigido). Ordenado por severidade para o HUB renderizar direto.
+    # (só redigido). Ordenado por severidade para renderização direta.
     achados = []
     for k, v in links.items():
         for a in v.get("achados", []):

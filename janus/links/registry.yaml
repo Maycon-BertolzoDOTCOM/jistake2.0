@@ -3,6 +3,13 @@
 # Links de terceiros NUNCA entram aqui.
 # Campo `gate`: pre-aprovado | pendente — worker.py só executa probe com
 # gate.action_approved(link, categoria) verdadeiro (ver janus/queue/gate.py).
+#
+# CAMPOS DE AUTORIZAÇÃO (obrigatórios para gate v1+):
+#   autorizacao_id: sha256:<hash-do-contrato-assinado> | uuid:<ref-externa>
+#   autorizado_por: "nome <email@dominio>" — parte que assina a autorização
+#   janela: "YYYY-MM-DDTHH:MM:SSZ/YYYY-MM-DDTHH:MM:SSZ" — intervalo UTC (ISO 8601)
+#   limites: lista de strings — ex: ["sem_dos", "sem_dados_reais", "sem_engenharia_social"]
+#   escopo: lista de domínios/IPs/apps explícitos — validação de alvo
 
 gpts:
   - id: jis-take-2.0
@@ -15,6 +22,12 @@ gpts:
     gate: pre-aprovado
     prioridade: alta
     categorias: [cat1_direta, cat2_roleplay, cat3_autoridade, cat4_traducao, cat8_output_embedding]
+    # CAMPOS DE AUTORIZAÇÃO
+    autorizacao_id: "sha256:placeholder-contrato-jis-take-2.0-2026-10-14"
+    autorizado_por: "dougdemarco <doug@local>"
+    janela: "2026-11-01T00:00:00Z/2027-01-31T23:59:59Z"
+    limites: ["sem_dos", "sem_dados_reais", "sem_engenharia_social", "sem_persistencia"]
+    escopo: ["jis-take-2.0"]
 
   # Alvo controlado do PoC do Achado #002. GPT isca criado só para testes,
   # com segredo canário sintético (formato <palavra>-<palavra>-<4chars>).
@@ -27,6 +40,12 @@ gpts:
     gate: pre-aprovado
     prioridade: alta
     categorias: [cat7_multiturno, cat8_output_embedding, cat11_lrl, cat12_encoding]
+    # CAMPOS DE AUTORIZAÇÃO
+    autorizacao_id: "sha256:placeholder-contrato-isca-poc-002-2026-10-14"
+    autorizado_por: "dougdemarco <doug@local>"
+    janela: "2026-11-01T00:00:00Z/2027-01-31T23:59:59Z"
+    limites: ["sem_dos", "sem_dados_reais", "sem_engenharia_social", "sem_persistencia"]
+    escopo: ["isca-poc-002"]
 
   # Placeholders — TROCAR pelos links reais antes de enfileirar.
   # Enquanto o link for PLACEHOLDER, o worker recusa (não resolve gpt_id).
@@ -37,6 +56,12 @@ gpts:
     gate: pendente
     prioridade: media
     categorias: [cat1_direta, cat2_roleplay]
+    # CAMPOS DE AUTORIZAÇÃO (preenchidos quando autorizado)
+    autorizacao_id: ""
+    autorizado_por: ""
+    janela: ""
+    limites: []
+    escopo: []
 
   - id: jis-voice
     link: PLACEHOLDER_TROCAR_PELO_LINK_REAL
@@ -45,3 +70,9 @@ gpts:
     gate: pendente
     prioridade: baixa
     categorias: [cat1_direta]
+    # CAMPOS DE AUTORIZAÇÃO (preenchidos quando autorizado)
+    autorizacao_id: ""
+    autorizado_por: ""
+    janela: ""
+    limites: []
+    escopo: []

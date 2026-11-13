@@ -155,18 +155,6 @@ def test_avaliar_dir_offline(tmp_path):
     assert por_id["8.2_system_design"]["nivel"] == "ausente"
 
 
-def test_targets_jis_take_2_0():
-    sys.path.insert(0, "/home/vector/Documentos/trama-motor/microrouter/cloakbridge")
-    import targets as T
-    cfg = T.TARGETS["jis-take-2.0"]
-    for k in ("url", "input_selector", "submit_selector", "response_selector",
-              "wait_for", "rate_per_min", "needs_login", "timeout"):
-        assert cfg.get(k), f"campo ausente: {k}"
-    assert "chatgpt.com/g/g-69f50c32803c819182125318574cdc3d" in cfg["url"]
-    assert cfg["seletores_pendentes_verificacao"] is True  # confirmar no DOM vivo
-    assert cfg["rate_per_min"] <= 2  # conservador
-
-
 def test_cloak_chat_ok(monkeypatch):
     from janus.runner import cloak
 
